@@ -17,7 +17,7 @@ input_modules = [['S','S','S','S','S','S','S'],
 
 w = 15
 h = 15
-output = [[Square(tile_types) for i in range(w)] for j in range(h)]
+output = [[Square(tile_types,'S',True) for i in range(w)] for j in range(h)]
 
 patterns = pattern_recogision(input_modules)
 
