@@ -2,11 +2,12 @@ import math
 import numpy as np
 
 class Square():
-    def __init__(self, tile_types, observed_state = None):
+    def __init__(self, tile_types, observed_state = None, observed = False):
         self.possible_tile_types = tile_types
-        self.observed = False
+        self.observed = observed
         self.observed_state = observed_state
         self.propogate_visited = False
+        self.has_requirement_neighboring = False
 
     def calculate_available_weights(self, weights: dict):
         self.weights_of_allowed_tile_type = []
@@ -32,18 +33,23 @@ class Square():
         weights = np.array(weights)
         weights = weights / sum(weights)
 
-        #print('asas',self.possible_tile_types,weights)
 
         if len(self.possible_tile_types) == 0:
             return self.observed_state
 
+        print('Collapsing',self.possible_tile_types,weights)
         collapsed_state = np.random.choice(self.possible_tile_types, p=weights)
         return collapsed_state
 
     def __repr__(self):
         if not self.observed:
             return '?'
-        return self.observed_state
+        if self.observed_state == 'C':
+            return '.'
+        elif self.observed_state == 'S':
+            return ' '
+        elif self.observed_state == 'L':
+            return '='
 
 
 # Sums are over the weights of each remaining

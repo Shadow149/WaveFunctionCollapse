@@ -5,18 +5,26 @@ from PIL import Image
 from collections import Counter
 from itertools import chain
 
-tile_types = ['╔','╗','╚','╝']
+tile_types = ['S','C','L']
 
-input_modules = [['╔','╗','╔','╗'],
-                 ['╚','╝','╚','╝'],
-                 ['╔','╗','╔','╗'],
-                 ['╚','╝','╚','╝']]
+input_modules = [['S','S','S','S','S','S','S'],
+                 ['S','S','C','C','C','S','S'],
+                 ['S','C','L','L','L','C','S'],
+                 ['S','C','L','L','L','C','S'],
+                 ['S','C','L','L','L','C','S'],
+                 ['S','S','C','C','C','S','S'],
+                 ['S','S','S','S','S','S','S']]
 
-w = 10
-h = 10
+w = 15
+h = 15
 output = [[Square(tile_types) for i in range(w)] for j in range(h)]
 
 patterns = pattern_recogision(input_modules)
+
+patterns.append(('C','L','MUST'))
+patterns.append(('L','C','MUST'))
+patterns.append(('S','C','MUST'))
+patterns.append(('C','S','MUST'))
 
 #patterns = [('G','S','DOWN'),('G','G','LEFT'),('G','G','RIGHT'),('L','G','TOP'),('P','L','TOP'),('P','P','LEFT'),('P','P','RIGHT'),('S','P','TOP'),('S','P','DOWN'),('S','P','LEFT'),('S','P','RIGHT'),('S','L','LEFT'),('S','L','RIGHT')]
 
@@ -123,9 +131,15 @@ def propogate(x, y, previous_square, direction):
                 if pattern[1] == neighbor[0].observed_state:
                     if pattern[2] == get_opposite_direction(neighbor[1]):
                         temp.append(pattern[0])
+                    #if not neighbor[0].has_requirement_neighboring:
+                    #    if pattern[2] == 'MUST':
+                    #        #print('bitch')
+                    #        neighbor[0].has_requirement_neighboring = True
+                    #        output[x][y].has_requirement_neighboring = True
+                    #        temp = pattern[0]
             possible_states.append(temp)
         
-        print(possible_states)
+        #print(possible_states)
         unique_possible_states = set(tile_types)
         for i in possible_states:
             temp = []
@@ -134,7 +148,7 @@ def propogate(x, y, previous_square, direction):
             else:
                 temp = i
             #print(temp)
-            print(unique_possible_states & set(temp))
+            #print(unique_possible_states & set(temp))
             unique_possible_states = unique_possible_states & set(temp)
         unique_possible_states = list(unique_possible_states)
 
@@ -150,15 +164,15 @@ def propogate(x, y, previous_square, direction):
         #             if pattern[2] == direction:
         #                 #print(possible_states)
         #                 possible_states.append(pattern[0])
-        print(unique_possible_states)
+        #print(unique_possible_states)
         if len(unique_possible_states) == 0:
             unique_possible_states = tile_types
 
             if output[x][y].observed:
                 unique_possible_states = [output[x][y].observed_state]
 
-        print(possible_states)
-        print(x,y,output[x][y].observed_state,unique_possible_states)
+        #print(possible_states)
+        #print(x,y,output[x][y].observed_state,unique_possible_states)
 
         previous_square = output[x][y]
 
@@ -181,18 +195,19 @@ def propogate(x, y, previous_square, direction):
 
 #collapsed_position = [9,0]
 #
-for i in range((w**2)):
-    
-    collapsed_position = collapse_possible()
-    propogate(collapsed_position[0],collapsed_position[1], None, None)
+if __name__ == '__main__':
+    for i in range((w**2)):
+        
+        collapsed_position = collapse_possible()
+        propogate(collapsed_position[0],collapsed_position[1], None, None)
 
-    display_map()
-    print('\n')
-    input()
-    display_stated()
-    
-    for i in range(len(output)):
-        for j in range(len(output[0])):
-            output[i][j].propogate_visited = False
+        display_map()
+        print('\n')
+        #input()
+        #display_stated()
+        
+        for i in range(len(output)):
+            for j in range(len(output[0])):
+                output[i][j].propogate_visited = False
 
-display_map(save=True)
+    display_map(save=True)
