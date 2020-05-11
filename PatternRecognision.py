@@ -52,11 +52,11 @@ def pattern_recogision(modules: list):
                 if not isNewPatternReverse:
                     patterns.append(newPatternReverse)
                     
-                if not isNewPattern1:
-                    patterns.append(newPattern1)
+                # if not isNewPattern1:
+                #     patterns.append(newPattern1)
 
-                if not isNewPatternReverse:
-                    patterns.append(newPatternReverse1)
+                # if not isNewPatternReverse:
+                #     patterns.append(newPatternReverse1)
 
             previousModule = module
         previousModule = None
@@ -96,11 +96,11 @@ def pattern_recogision(modules: list):
                 if not isNewPatternReverse:
                     patterns.append(newPatternReverse)
 
-                if not isNewPattern1:
-                    patterns.append(newPattern1)
+                # if not isNewPattern1:
+                #     patterns.append(newPattern1)
 
-                if not isNewPatternReverse1:
-                    patterns.append(newPatternReverse1)
+                # if not isNewPatternReverse1:
+                #     patterns.append(newPatternReverse1)
 
             previousModule = module
         previousModule = None

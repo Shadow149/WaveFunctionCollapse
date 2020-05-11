@@ -3,7 +3,8 @@ import numpy as np
 
 class Square():
     def __init__(self, tile_types, observed_state = None, observed = False):
-        self.possible_tile_types = tile_types
+        self.tile_set =tile_types
+        self.possible_tile_types = self.tile_set
         self.observed = observed
         self.observed_state = observed_state
         self.propogate_visited = False
@@ -28,6 +29,8 @@ class Square():
         return shannon_entropy
 
     def collapse(self, weights: dict):
+        self.possible_tile_types = list(set(self.possible_tile_types) & set(self.tile_set))
+
         weights = self.calculate_available_weights(weights)
 
         weights = np.array(weights)
@@ -36,6 +39,7 @@ class Square():
 
         if len(self.possible_tile_types) == 0:
             return self.observed_state
+        
 
         print('Collapsing',self.possible_tile_types,weights)
         collapsed_state = np.random.choice(self.possible_tile_types, p=weights)
@@ -45,12 +49,17 @@ class Square():
         if not self.observed:
             return '?'
         if self.observed_state == 'C':
-            return '.'
+            return '+'
         elif self.observed_state == 'S':
             return ' '
         elif self.observed_state == 'L':
-            return '='
-
+            return '|'
+        elif self.observed_state == 'G':
+            return '.'
+        elif self.observed_state == 'P':
+            return '_'
+        else:
+            return 'U'
 
 # Sums are over the weights of each remaining
 # allowed tile type for the square whose

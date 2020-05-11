@@ -5,26 +5,64 @@ from PIL import Image
 from collections import Counter
 from itertools import chain
 
-tile_types = ['S','C','L']
+tile_types = ['G','T','P','E','S']
 
-input_modules = [['S','S','S','S','S','S','S'],
-                 ['S','S','C','C','C','S','S'],
-                 ['S','C','L','L','L','C','S'],
-                 ['S','C','L','L','L','C','S'],
-                 ['S','C','L','L','L','C','S'],
-                 ['S','S','C','C','C','S','S'],
-                 ['S','S','S','S','S','S','S']]
+input_modules = [['E','S','P','P','E','S'],
+                 ['G','G','G','G','G','G'],
+                 ['G','G','T','T','G','G'],
+                 ['G','G','T','T','G','G'],
+                 ['E','S','P','P','E','S'],
+                 ['G','G','G','G','G','G']]
 
-w = 15
-h = 15
-output = [[Square(tile_types,'S',True) for i in range(w)] for j in range(h)]
+input_modules_weights = [['G','G','G','G'],
+                         ['G','T','T','G'],
+                         ['G','T','T','G'],
+                         ['S','P','P','E'],]
 
-patterns = pattern_recogision(input_modules)
+# tile_types = ['LC','BC','RC','TC','L','S']
 
-patterns.append(('C','L','MUST'))
-patterns.append(('L','C','MUST'))
-patterns.append(('S','C','MUST'))
-patterns.append(('C','S','MUST'))
+# input_modules = [['S','S','S','S','S','S','S'],
+#                  ['S','S','TC','TC','TC','S','S'],
+#                  ['S','LC','L','L','L','RC','S'],
+#                  ['S','LC','L','L','L','RC','S'],
+#                  ['S','LC','L','L','L','RC','S'],
+#                  ['S','S','BC','BC','BC','S','S'],
+#                  ['S','S','S','S','S','S','S']]
+
+# input_modules_weights = [['S','TC','TC','TC','S'],
+#                          ['LC','L','L','L','RC'],
+#                          ['LC','L','L','L','RC'],
+#                          ['LC','L','L','L','RC'],
+#                          ['S','BC','BC','BC','S'],]
+
+# tile_types = ['L','C','P','S','B']
+
+# input_modules = [['S','S','S','S','S','S'],
+#                  ['S','L','S','S','S','S'],
+#                  ['P','C','P','B','P','P'],
+#                  ['S','L','S','L','S','S'],
+#                  ['S','L','S','L','S','S'],
+#                  ['S','L','S','L','S','S']]
+
+# input_modules_weights = [['S','L','S','S'],
+#                          ['P','C','P','B'],
+#                          ['S','L','S','L'],
+#                          ['S','L','S','L'],]
+
+w = 5
+h = 5
+output = [[Square(tile_types) for i in range(w)] for j in range(h)]
+
+patterns = pattern_recogision(input_modules_weights)
+
+# patterns.append(('C','S','MUST'))
+# patterns.append(('S','C','MUST'))
+
+# patterns.append(('C','L','MUST'))
+# patterns.append(('L','C','MUST'))
+
+# patterns.append(('L','S','NOT'))
+# patterns.append(('S','L','NOT'))
 
 #patterns = [('G','S','DOWN'),('G','G','LEFT'),('G','G','RIGHT'),('L','G','TOP'),('P','L','TOP'),('P','P','LEFT'),('P','P','RIGHT'),('S','P','TOP'),('S','P','DOWN'),('S','P','LEFT'),('S','P','RIGHT'),('S','L','LEFT'),('S','L','RIGHT')]
 
@@ -79,12 +117,17 @@ def collapse_possible():
 
     #print(min_entropy_square_index)
     #print(square_positions[min_entropy_square_index])
+    loop_time = 0
     while output[square_positions[min_entropy_square_index][0]][square_positions[min_entropy_square_index][1]].observed_state in output[square_positions[min_entropy_square_index][0]][square_positions[min_entropy_square_index][1]].possible_tile_types:
         #print('ok',entropies)
         #print('oof')
-
+        #TODO fix your shit
+        loop_time += 1
         entropies[min_entropy_square_index] = 9999
         min_entropy_square_index = min(enumerate(entropies), key=itemgetter(1))[0]
+
+        if loop_time > (w*h):
+            return (0,0)
 
     #print(min_entropy_square_index)
     #print(square_positions[min_entropy_square_index])
@@ -103,53 +146,43 @@ def neighbors(x, y):
     if y < len(output) - 1:
         n.append([output[x][y+1],'LEFT'])
     if x > 0:
-        n.append([output[x-1][y], 'DOWN'])
+        n.append([output[x-1][y], 'TOP'])
     if x < len(output[y]) - 1:
-        n.append([output[x+1][y], 'TOP'])
+        n.append([output[x+1][y], 'DOWN'])
     return n
 
-def get_opposite_direction(dir):
-    if dir == 'TOP':
-        return 'DOWN'
-    if dir == 'DOWN':
-        return 'TOP' 
-    if dir == 'RIGHT':
-        return 'LEFT' 
-    if dir == 'LEFT':
-        return 'RIGHT' 
 
-def propogate(x, y, previous_square, direction):
+def propogate(x, y, previous_square):
     #"hidden" stop clause - not reinvoking for "c" or "b", only for "a".
     if (not output[x][y].propogate_visited) or previous_square == None:
         possible_states = []
+        ban_list = []
+        must_list = []
 
         square_neighbors = neighbors(x,y)
+        #print(square_neighbors)
         for neighbor in square_neighbors:
             temp = []
             for pattern in patterns:
-                # pattern : ['s','s','LEFT']
+                # pattern : ['E','S','LEFT']
                 if pattern[1] == neighbor[0].observed_state:
-                    if pattern[2] == get_opposite_direction(neighbor[1]):
+                    if pattern[2] == neighbor[1]:
+                        #print(pattern)
                         temp.append(pattern[0])
-                    #if not neighbor[0].has_requirement_neighboring:
-                    #    if pattern[2] == 'MUST':
-                    #        #print('bitch')
-                    #        neighbor[0].has_requirement_neighboring = True
-                    #        output[x][y].has_requirement_neighboring = True
-                    #        temp = pattern[0]
             possible_states.append(temp)
         
-        #print(possible_states)
-        unique_possible_states = set(tile_types)
+        flattened_possible_states = [item for sublist in possible_states for item in sublist]
+        #print('flattened_possible_states',flattened_possible_states)
+        unique_possible_states = set(flattened_possible_states)
         for i in possible_states:
-            temp = []
-            if len(i) == 0:
-                temp = tile_types
-            else:
-                temp = i
-            #print(temp)
-            #print(unique_possible_states & set(temp))
-            unique_possible_states = unique_possible_states & set(temp)
+           temp = []
+           if len(i) == 0:
+               temp = output[x][y].tile_set
+           else:
+               temp = i
+           #print('t',temp)
+           #print('u+t',unique_possible_states & set(temp))
+           unique_possible_states = unique_possible_states & set(temp)
         unique_possible_states = list(unique_possible_states)
 
 
@@ -164,33 +197,53 @@ def propogate(x, y, previous_square, direction):
         #             if pattern[2] == direction:
         #                 #print(possible_states)
         #                 possible_states.append(pattern[0])
-        #print(unique_possible_states)
+        #print('m',must_list)
+        #print('bl',ban_list)
+        print('ps',possible_states)
+        print(unique_possible_states)
         if len(unique_possible_states) == 0:
-            unique_possible_states = tile_types
+            #print(type(possible_states))
 
-            if output[x][y].observed:
-                unique_possible_states = [output[x][y].observed_state]
+            #flattened_possible_states = [item for sublist in possible_states for item in sublist]
 
-        #print(possible_states)
+            # counter = Counter(flattened_possible_states)
+            # most_common = counter.most_common()
+
+            # print(most_common)
+            # if most_common[0][1] > 1:
+            #     unique_possible_states = [most_common[0][0]]
+            # else:
+            #unique_possible_states = output[x][y].tile_set
+            print('gasp')
+            return
+            #if output[x][y].observed:
+            #    unique_possible_states = [output[x][y].observed_state]
+
+        #print(unique_possible_states)
         #print(x,y,output[x][y].observed_state,unique_possible_states)
+
+        #TODO MUST PATTERNS 
 
         previous_square = output[x][y]
 
-        output[x][y].possible_tile_types = list(set(unique_possible_states))
-        output[x][y].propogate_visited = True
+        if output[x][y].possible_tile_types != list(set(unique_possible_states)):
 
-        #display_map()
-        #display_stated()
-        #input()
+            output[x][y].possible_tile_types = list(set(unique_possible_states))
+            output[x][y].propogate_visited = True
 
-        if y > 0:
-            propogate(x,y-1,output[x][y],'LEFT')
-        if y < len(output) - 1:
-            propogate(x,y+1,output[x][y],'RIGHT')
-        if x > 0:
-            propogate(x-1,y,output[x][y],'TOP')
-        if x < len(output[y]) - 1:
-            propogate(x+1,y,output[x][y],'DOWN')
+            #display_map()
+            #display_stated()
+            #input()
+
+            
+            if y > 0:
+                propogate(x,y-1,output[x][y])
+            if y < len(output) - 1:
+                propogate(x,y+1,output[x][y])
+            if x > 0:
+                propogate(x-1,y,output[x][y])
+            if x < len(output[y]) - 1:
+                propogate(x+1,y,output[x][y])
 
 
 #collapsed_position = [9,0]
